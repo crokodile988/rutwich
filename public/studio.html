@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StreamHub Studio</title>
+    <link rel="stylesheet" href="/app.css">
+    <script defer src="/host.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/">
+          <span class="brand-mark"></span>
+          <span>StreamHub</span>
+        </a>
+
+        <label class="search-shell" aria-label="Студия">
+          <span class="icon">●</span>
+          <input type="text" value="Studio mode" readonly>
+        </label>
+
+        <div class="topbar-actions">
+          <a class="ghost-button" href="/">К витрине</a>
+          <a class="primary-link" href="/watch.html">Открыть плеер</a>
+        </div>
+      </header>
+
+      <div class="app-main">
+        <aside class="sidebar">
+          <div class="sidebar-section">
+            <p class="sidebar-title">Студия</p>
+            <a class="nav-link" href="/">Главная</a>
+            <a class="nav-link active" href="/studio.html">OBS-style studio</a>
+            <a class="nav-link" href="/watch.html">Просмотр</a>
+          </div>
+
+          <div class="sidebar-section">
+            <p class="sidebar-title">Что умеет</p>
+            <a class="nav-link" href="/studio.html">Сцены и источники</a>
+            <a class="nav-link" href="/studio.html">Экран + вебка одновременно</a>
+            <a class="nav-link" href="/studio.html">Аудиомикшер и live</a>
+          </div>
+        </aside>
+
+        <main class="content-shell studio-shell">
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Creator Studio</p>
+              <h1>Собери сцену как в мини-OBS и выйди в эфир из браузера</h1>
+              <p class="page-subtitle">
+                Сначала готовишь превью, потом включаешь live. Экран, окно или вкладка могут идти вместе с вебкой
+                в одном композитном потоке.
+              </p>
+            </div>
+            <div class="page-head-actions">
+              <span class="chip" id="studioModeChip">Offline</span>
+            </div>
+          </div>
+
+          <section class="obs-layout">
+            <div class="panel obs-preview-panel">
+              <div class="panel-inner stack">
+                <div class="obs-preview-head">
+                  <div>
+                    <h2>Program Preview</h2>
+                    <p class="message" id="hostMessage">
+                      Подготовь сцену и включи поток.
+                    </p>
+                  </div>
+                  <span class="chip" id="sceneValue">Экран + вебка</span>
+                </div>
+
+                <div class="video-frame large studio-preview-frame">
+                  <video id="previewVideo" autoplay muted playsinline></video>
+                  <div class="video-overlay" id="previewOverlay">
+                    <div class="video-chip">Превью ещё не подготовлено</div>
+                  </div>
+                  <div class="preview-floating-badge" id="previewStateBadge">OFFLINE</div>
+                </div>
+
+                <div class="studio-status-grid">
+                  <div class="mini-info-card">
+                    <span class="status-label">Комната</span>
+                    <span class="status-value" id="roomIdValue">Не создана</span>
+                  </div>
+                  <div class="mini-info-card">
+                    <span class="status-label">Зрители</span>
+                    <span class="status-value" id="viewerCountValue">0</span>
+                  </div>
+                  <div class="mini-info-card">
+                    <span class="status-label">Output</span>
+                    <span class="status-value" id="outputStateValue">Offline</span>
+                  </div>
+                  <div class="mini-info-card">
+                    <span class="status-label">Scene</span>
+                    <span class="status-value" id="sceneNameValue">Overlay</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="obs-dock-grid">
+              <div class="panel obs-panel">
+                <div class="panel-inner stack">
+                  <div class="section-heading">
+                    <h3>Сцены</h3>
+                    <span class="chip">Switch</span>
+                  </div>
+
+                  <div class="scene-grid">
+                    <button class="scene-button active" type="button" data-scene="overlay">Экран + вебка</button>
+                    <button class="scene-button" type="button" data-scene="split">Сплит</button>
+                    <button class="scene-button" type="button" data-scene="screen">Только экран</button>
+                    <button class="scene-button" type="button" data-scene="camera">Только вебка</button>
+                  </div>
+
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="webcamPositionSelect">Позиция вебки</label>
+                      <select id="webcamPositionSelect">
+                        <option value="bottom-right">Снизу справа</option>
+                        <option value="bottom-left">Снизу слева</option>
+                        <option value="top-right">Сверху справа</option>
+                        <option value="top-left">Сверху слева</option>
+                      </select>
+                    </div>
+
+                    <div class="field">
+                      <label for="webcamSizeSelect">Размер вебки</label>
+                      <select id="webcamSizeSelect">
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel obs-panel">
+                <div class="panel-inner stack">
+                  <div class="section-heading">
+                    <h3>Источники</h3>
+                    <span class="chip">Sources</span>
+                  </div>
+
+                  <div class="source-list">
+                    <label class="source-row">
+                      <span>
+                        <strong>Захват окна / экрана</strong>
+                        <small>Окно, экран или вкладка</small>
+                      </span>
+                      <input id="screenSourceToggle" type="checkbox" checked>
+                    </label>
+
+                    <label class="source-row">
+                      <span>
+                        <strong>Веб-камера</strong>
+                        <small>Оверлей или отдельная сцена</small>
+                      </span>
+                      <input id="cameraSourceToggle" type="checkbox" checked>
+                    </label>
+
+                    <label class="source-row">
+                      <span>
+                        <strong>Микрофон</strong>
+                        <small>Отдельная дорожка в микшере</small>
+                      </span>
+                      <input id="microphoneToggle" type="checkbox" checked>
+                    </label>
+
+                    <label class="source-row">
+                      <span>
+                        <strong>Системный звук</strong>
+                        <small>Если браузер даст его при захвате окна</small>
+                      </span>
+                      <input id="systemAudioToggle" type="checkbox">
+                    </label>
+                  </div>
+
+                  <button id="prepareButton" class="secondary" type="button">Подготовить сцену</button>
+                </div>
+              </div>
+
+              <div class="panel obs-panel">
+                <div class="panel-inner stack">
+                  <div class="section-heading">
+                    <h3>Аудиомикшер</h3>
+                    <span class="chip">Mixer</span>
+                  </div>
+
+                  <div class="mixer-row">
+                    <div class="mixer-info">
+                      <strong>Mic / Aux</strong>
+                      <small>Громкость микрофона</small>
+                    </div>
+                    <input id="micVolumeInput" type="range" min="0" max="100" value="90">
+                    <div class="meter">
+                      <div class="meter-fill" id="micMeterFill"></div>
+                    </div>
+                  </div>
+
+                  <div class="mixer-row">
+                    <div class="mixer-info">
+                      <strong>Desktop Audio</strong>
+                      <small>Звук окна или вкладки</small>
+                    </div>
+                    <input id="systemVolumeInput" type="range" min="0" max="100" value="70">
+                    <div class="meter">
+                      <div class="meter-fill" id="systemMeterFill"></div>
+                    </div>
+                  </div>
+
+                  <p class="panel-copy">
+                    Если меняешь набор источников, нажми «Подготовить сцену» ещё раз. Смена сцены и позиции вебки
+                    применяется сразу.
+                  </p>
+                </div>
+              </div>
+
+              <div class="panel obs-panel">
+                <div class="panel-inner stack">
+                  <div class="section-heading">
+                    <h3>Управление эфиром</h3>
+                    <span class="chip">Controls</span>
+                  </div>
+
+                  <div class="field">
+                    <label for="roomTitle">Название стрима</label>
+                    <input id="roomTitle" type="text" maxlength="80" placeholder="Например: Стрим с окном и вебкой">
+                  </div>
+
+                  <div class="button-row">
+                    <button id="createRoomButton" class="secondary" type="button">Создать комнату</button>
+                    <button id="startButton" type="button">Выйти в эфир</button>
+                    <button id="stopButton" class="danger" type="button" disabled>Остановить эфир</button>
+                  </div>
+
+                  <div class="field">
+                    <label for="shareUrl">Ссылка для зрителей</label>
+                    <div class="share-link">
+                      <input id="shareUrl" type="text" readonly placeholder="Сначала создай комнату">
+                      <button id="copyLinkButton" class="secondary" type="button" disabled>Копировать</button>
+                    </div>
+                  </div>
+
+                  <ul class="help-list">
+                    <li>Превью можно держать включённым даже когда live остановлен.</li>
+                    <li>Во время live смена сцены применяется сразу к композиту.</li>
+                    <li>Для чужих сетей и мобильных операторов позже пригодится TURN.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
