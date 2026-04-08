@@ -34,6 +34,7 @@ const hostState = {
   hostToken: "",
   isPreparing: false,
   lastEventId: 0,
+  pendingViewerIce: new Map(),
   peers: new Map(),
   pollTimer: 0,
   renderFrame: 0,
@@ -864,12 +865,41 @@ async function sendHostEvent(to, type, payload) {
 function closePeer(viewerId) {
   const peer = hostState.peers.get(viewerId);
   if (!peer) {
+    hostState.pendingViewerIce.delete(viewerId);
     return;
   }
 
   peer.close();
   hostState.peers.delete(viewerId);
+  hostState.pendingViewerIce.delete(viewerId);
   updateRoomInfo();
+}
+
+function hasRemoteDescription(peer) {
+  return Boolean(
+    peer?.remoteDescription ||
+    peer?.currentRemoteDescription ||
+    peer?.pendingRemoteDescription
+  );
+}
+
+function queueViewerIceCandidate(viewerId, candidate) {
+  const queue = hostState.pendingViewerIce.get(viewerId) || [];
+  queue.push(candidate);
+  hostState.pendingViewerIce.set(viewerId, queue);
+}
+
+async function flushPendingViewerIce(viewerId, peer) {
+  const queue = hostState.pendingViewerIce.get(viewerId) || [];
+  if (!hasRemoteDescription(peer) || queue.length === 0) {
+    return;
+  }
+
+  hostState.pendingViewerIce.delete(viewerId);
+
+  for (const candidate of queue) {
+    await peer.addIceCandidate(candidate);
+  }
 }
 
 async function connectViewer(viewerId) {
@@ -886,6 +916,7 @@ async function connectViewer(viewerId) {
   });
 
   hostState.peers.set(viewerId, peer);
+  hostState.pendingViewerIce.set(viewerId, []);
   hostState.waitingViewers.delete(viewerId);
   updateRoomInfo();
 
@@ -942,6 +973,7 @@ async function handleHostEvent(event) {
     const peer = hostState.peers.get(event.from);
     if (peer && !peer.currentRemoteDescription) {
       await peer.setRemoteDescription(event.payload);
+      await flushPendingViewerIce(event.from, peer);
     }
     return;
   }
@@ -949,6 +981,11 @@ async function handleHostEvent(event) {
   if (event.type === "viewer-ice") {
     const peer = hostState.peers.get(event.from);
     if (peer && event.payload) {
+      if (!hasRemoteDescription(peer)) {
+        queueViewerIceCandidate(event.from, event.payload);
+        return;
+      }
+
       await peer.addIceCandidate(event.payload);
     }
   }
