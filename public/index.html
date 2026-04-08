@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StreamHub</title>
+    <link rel="stylesheet" href="/app.css">
+    <script defer src="/home.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/">
+          <span class="brand-mark"></span>
+          <span>StreamHub</span>
+        </a>
+
+        <label class="search-shell" aria-label="Поиск">
+          <span class="icon">⌕</span>
+          <input id="searchInput" type="search" placeholder="Поиск по активным эфирам">
+        </label>
+
+        <div class="topbar-actions">
+          <a class="ghost-button" href="/watch.html">Подключиться по ID</a>
+          <a class="primary-link" href="/studio.html">Начать эфир</a>
+        </div>
+      </header>
+
+      <div class="app-main">
+        <aside class="sidebar">
+          <div class="sidebar-section">
+            <p class="sidebar-title">Навигация</p>
+            <a class="nav-link active" href="/">Главная</a>
+            <a class="nav-link" href="/studio.html">Студия</a>
+            <a class="nav-link" href="/watch.html">Подключение по ссылке</a>
+          </div>
+
+          <div class="sidebar-section">
+            <p class="sidebar-title">Фокус MVP</p>
+            <a class="nav-link" href="/">Живые эфиры</a>
+            <a class="nav-link" href="/studio.html">Быстрый старт</a>
+            <a class="nav-link" href="/watch.html">Просмотр в браузере</a>
+          </div>
+        </aside>
+
+        <main class="content-shell">
+          <section class="hero-banner">
+            <p class="eyebrow">Live Directory</p>
+            <h1>Главное меню с живыми стримами и быстрым входом в эфир</h1>
+            <p class="hero-copy">
+              Это домашняя витрина сервиса: здесь показываются только реально запущенные трансляции,
+              а из студии можно сразу уйти в live и поделиться ссылкой.
+            </p>
+
+            <div class="hero-actions">
+              <a class="primary-link" href="/studio.html">Открыть студию</a>
+              <a class="ghost-button" href="/watch.html">Смотреть по room ID</a>
+            </div>
+
+            <div class="hero-stats">
+              <span class="stat-pill"><span class="live-dot"></span><strong id="heroLiveCount">0</strong> live now</span>
+              <span class="stat-pill"><strong>RTMP</strong> серверный relay через OBS и HTTP-FLV</span>
+            </div>
+          </section>
+
+          <section class="page-section">
+            <div class="section-heading">
+              <h2>Сейчас в эфире</h2>
+              <span class="chip" id="liveCountBadge">0 стримов</span>
+            </div>
+
+            <p class="message" id="homeMessage">
+              Обновляем список активных эфиров...
+            </p>
+
+            <div class="live-grid" id="liveGrid"></div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

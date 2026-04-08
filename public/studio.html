@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StreamHub Studio</title>
+    <link rel="stylesheet" href="/app.css">
+    <script defer src="/host.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/">
+          <span class="brand-mark"></span>
+          <span>StreamHub</span>
+        </a>
+
+        <label class="search-shell" aria-label="Студия">
+          <span class="icon">●</span>
+          <input type="text" value="RTMP studio" readonly>
+        </label>
+
+        <div class="topbar-actions">
+          <a class="ghost-button" href="/">К витрине</a>
+          <a class="primary-link" href="/watch.html">Открыть плеер</a>
+        </div>
+      </header>
+
+      <div class="app-main">
+        <aside class="sidebar">
+          <div class="sidebar-section">
+            <p class="sidebar-title">Студия</p>
+            <a class="nav-link" href="/">Главная</a>
+            <a class="nav-link active" href="/studio.html">RTMP studio</a>
+            <a class="nav-link" href="/watch.html">Просмотр</a>
+          </div>
+
+          <div class="sidebar-section">
+            <p class="sidebar-title">Поток</p>
+            <a class="nav-link" href="/studio.html">Создай комнату</a>
+            <a class="nav-link" href="/studio.html">Вставь RTMP в OBS</a>
+            <a class="nav-link" href="/studio.html">Покажи эфир в каталоге</a>
+          </div>
+        </aside>
+
+        <main class="content-shell studio-shell">
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Creator Studio</p>
+              <h1>Серверный RTMP-стрим вместо браузерного P2P</h1>
+              <p class="page-subtitle">
+                Создай комнату, вставь RTMP URL и stream key в OBS, затем включи эфир в каталоге. Зрители будут получать
+                уже серверный поток, а не прямое соединение с твоим браузером.
+              </p>
+            </div>
+            <div class="page-head-actions">
+              <span class="chip" id="studioModeChip">Ready</span>
+            </div>
+          </div>
+
+          <section class="player-layout">
+            <div class="stack">
+              <div class="panel">
+                <div class="panel-inner stack">
+                  <div class="section-heading">
+                    <h2>Настройка эфира</h2>
+                    <span class="chip" id="outputStateValue">Ready</span>
+                  </div>
+
+                  <p class="message" id="hostMessage">
+                    Загружаем конфиг RTMP-сервера...
+                  </p>
+
+                  <div class="field">
+                    <label for="roomTitle">Название стрима</label>
+                    <input id="roomTitle" type="text" maxlength="80" placeholder="Например: Стрим через OBS и RTMP">
+                  </div>
+
+                  <div class="button-row">
+                    <button id="createRoomButton" class="secondary" type="button">Создать комнату</button>
+                    <button id="startButton" type="button">Показать в каталоге</button>
+                    <button id="stopButton" class="danger" type="button" disabled>Скрыть из каталога</button>
+                  </div>
+
+                  <div class="status-grid">
+                    <div class="status-item">
+                      <span class="status-label">Комната</span>
+                      <span class="status-value" id="roomIdValue">Не создана</span>
+                    </div>
+                    <div class="status-item">
+                      <span class="status-label">Статус</span>
+                      <span class="status-value" id="outputStateDisplay">Ready</span>
+                    </div>
+                    <div class="status-item">
+                      <span class="status-label">Зрители</span>
+                      <span class="status-value" id="viewerCountValue">0</span>
+                    </div>
+                    <div class="status-item">
+                      <span class="status-label">Stream key</span>
+                      <span class="status-value" id="streamKeyDisplay">—</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stack">
+              <div class="panel">
+                <div class="panel-inner stack">
+                  <div class="section-heading">
+                    <h2>Данные для OBS</h2>
+                    <span class="chip">RTMP</span>
+                  </div>
+
+                  <div class="field">
+                    <label for="publishUrlValue">RTMP URL</label>
+                    <input id="publishUrlValue" type="text" readonly placeholder="Сначала загрузи конфиг сервера">
+                  </div>
+
+                  <div class="field">
+                    <label for="streamKeyValue">Stream key</label>
+                    <input id="streamKeyValue" type="text" readonly placeholder="Сначала создай комнату">
+                  </div>
+
+                  <div class="field">
+                    <label for="shareUrl">Ссылка для зрителей</label>
+                    <div class="share-link">
+                      <input id="shareUrl" type="text" readonly placeholder="Сначала создай комнату">
+                      <button id="copyLinkButton" class="secondary" type="button" disabled>Копировать</button>
+                    </div>
+                  </div>
+
+                  <div class="field">
+                    <label for="watchUrlValue">Проверка просмотра</label>
+                    <input id="watchUrlValue" type="text" readonly placeholder="Откроется после создания комнаты">
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-inner stack">
+                  <div class="section-heading">
+                    <h2>Как запустить</h2>
+                    <span class="chip">Checklist</span>
+                  </div>
+
+                  <ul class="help-list">
+                    <li>Нажми `Создать комнату` и получи stream key.</li>
+                    <li>В OBS открой `Настройки -> Трансляция` и вставь RTMP URL плюс stream key.</li>
+                    <li>Запусти трансляцию в OBS.</li>
+                    <li>Вернись сюда и нажми `Показать в каталоге`.</li>
+                    <li>Открой ссылку просмотра во второй вкладке и проверь, что поток идёт.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

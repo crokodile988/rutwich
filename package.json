@@ -1,0 +1,16 @@
+{
+  "name": "simple-streaming-mvp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal browser-based streaming MVP with Node.js and WebRTC signaling.",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "flv.js": "^1.6.2",
+    "node-media-server": "^4.1.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
