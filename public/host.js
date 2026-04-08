@@ -150,6 +150,36 @@ function refreshControlStates() {
   hostElements.systemAudioToggle.disabled = !hostElements.screenSourceToggle.checked || hostState.isPreparing;
 }
 
+function isRoomNotFoundError(error) {
+  return typeof error?.message === "string" && error.message.includes("Room not found.");
+}
+
+function resetRoomIdentity(clearUrl = false) {
+  hostState.roomId = "";
+  hostState.hostToken = "";
+  hostState.waitingViewers = new Set();
+
+  if (clearUrl) {
+    window.history.replaceState({}, "", window.location.pathname);
+  }
+
+  updateRoomInfo();
+  refreshControlStates();
+}
+
+async function doesRoomStillExist(roomId) {
+  try {
+    await requestJson(`/api/rooms/${encodeURIComponent(roomId)}`);
+    return true;
+  } catch (error) {
+    if (isRoomNotFoundError(error)) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
 function syncUrl() {
   if (!hostState.roomId || !hostState.hostToken) {
     return;
@@ -181,7 +211,13 @@ async function requestJson(url, options = {}) {
 
 async function createRoom() {
   if (hostState.roomId) {
-    return hostState.roomId;
+    const stillExists = await doesRoomStillExist(hostState.roomId);
+    if (stillExists) {
+      return hostState.roomId;
+    }
+
+    resetRoomIdentity(true);
+    setHostMessage("Старая комната пропала после перезапуска сервера. Создаю новую.", "warn");
   }
 
   const data = await requestJson("/api/rooms", {
@@ -201,12 +237,23 @@ async function createRoom() {
 }
 
 async function connectHost() {
-  const data = await requestJson(`/api/rooms/${encodeURIComponent(hostState.roomId)}/host/connect`, {
-    method: "POST",
-    headers: {
-      "X-Host-Token": hostState.hostToken
+  let data;
+
+  try {
+    data = await requestJson(`/api/rooms/${encodeURIComponent(hostState.roomId)}/host/connect`, {
+      method: "POST",
+      headers: {
+        "X-Host-Token": hostState.hostToken
+      }
+    });
+  } catch (error) {
+    if (isRoomNotFoundError(error)) {
+      resetRoomIdentity(true);
+      throw new Error("Комната исчезла после перезапуска сервиса. Создай её заново и попробуй ещё раз.");
     }
-  });
+
+    throw error;
+  }
 
   hostState.hostConnected = true;
   hostState.waitingViewers = new Set((data.viewerIds || []).filter((viewerId) => !hostState.peers.has(viewerId)));
@@ -1136,6 +1183,13 @@ async function restoreRoomFromUrl() {
     setHostMessage("Комната восстановлена по URL. Можно готовить сцену или сразу выходить в эфир.", "ok");
   } catch (error) {
     console.error("Failed to restore room:", error);
+
+    if (isRoomNotFoundError(error)) {
+      resetRoomIdentity(true);
+      setHostMessage("Ссылка указывала на старую комнату, которой уже нет на сервере. Создай новую.", "warn");
+      return;
+    }
+
     setHostMessage("Не удалось восстановить комнату из URL.", "warn");
   }
 }
