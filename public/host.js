@@ -952,10 +952,16 @@ async function handleHostEvent(event) {
 
   if (event.type === "viewer-joined") {
     const viewerId = event.payload.viewerId;
+    const alreadyWaiting = hostState.waitingViewers.has(viewerId);
+
+    if (hostState.peers.has(viewerId)) {
+      return;
+    }
+
     hostState.waitingViewers.add(viewerId);
     updateRoomInfo();
 
-    if (hostState.hostConnected && hostState.stream) {
+    if (!alreadyWaiting && hostState.hostConnected && hostState.stream) {
       await connectViewer(viewerId);
     }
     return;
