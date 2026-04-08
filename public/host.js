@@ -9,6 +9,10 @@ const SCENE_LABELS = {
   split: "Сплит"
 };
 
+function normalizeRoomId(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
 function createEmptySourceBundle() {
   return {
     camera: null,
@@ -169,7 +173,7 @@ function resetRoomIdentity(clearUrl = false) {
 
 async function doesRoomStillExist(roomId) {
   try {
-    await requestJson(`/api/rooms/${encodeURIComponent(roomId)}`);
+    await requestJson(`/api/rooms/${encodeURIComponent(normalizeRoomId(roomId))}`);
     return true;
   } catch (error) {
     if (isRoomNotFoundError(error)) {
@@ -1158,7 +1162,7 @@ async function copyViewerLink() {
 
 async function restoreRoomFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  const roomId = params.get("room") || "";
+  const roomId = normalizeRoomId(params.get("room") || "");
   const token = window.location.hash.startsWith("#token=")
     ? decodeURIComponent(window.location.hash.slice("#token=".length))
     : "";
@@ -1170,7 +1174,7 @@ async function restoreRoomFromUrl() {
     return;
   }
 
-  hostState.roomId = roomId;
+  hostState.roomId = normalizeRoomId(roomId);
   hostState.hostToken = token;
   updateRoomInfo();
   refreshControlStates();
