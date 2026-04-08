@@ -1,5 +1,6 @@
 const viewerState = {
   lastEventId: 0,
+  pendingHostIce: [],
   peer: null,
   pollTimer: null,
   roomId: "",
@@ -154,11 +155,45 @@ async function sendViewerEvent(type, payload) {
 
 function closePeer() {
   if (!viewerState.peer) {
+    viewerState.pendingHostIce = [];
     return;
   }
 
   viewerState.peer.close();
   viewerState.peer = null;
+  viewerState.pendingHostIce = [];
+}
+
+function hasRemoteDescription(peer) {
+  return Boolean(
+    peer?.remoteDescription ||
+    peer?.currentRemoteDescription ||
+    peer?.pendingRemoteDescription
+  );
+}
+
+async function flushPendingHostIce(peer) {
+  if (!hasRemoteDescription(peer) || viewerState.pendingHostIce.length === 0) {
+    return;
+  }
+
+  const pendingCandidates = [...viewerState.pendingHostIce];
+  viewerState.pendingHostIce = [];
+
+  for (const candidate of pendingCandidates) {
+    await peer.addIceCandidate(candidate);
+  }
+}
+
+async function addHostIceCandidate(candidate) {
+  const peer = ensurePeer();
+
+  if (!hasRemoteDescription(peer)) {
+    viewerState.pendingHostIce.push(candidate);
+    return;
+  }
+
+  await peer.addIceCandidate(candidate);
 }
 
 function ensurePeer() {
@@ -230,6 +265,7 @@ async function handleViewerEvent(event) {
   if (event.type === "host-offer") {
     const peer = ensurePeer();
     await peer.setRemoteDescription(event.payload);
+    await flushPendingHostIce(peer);
 
     const answer = await peer.createAnswer();
     await peer.setLocalDescription(answer);
@@ -241,8 +277,7 @@ async function handleViewerEvent(event) {
   }
 
   if (event.type === "host-ice" && event.payload) {
-    const peer = ensurePeer();
-    await peer.addIceCandidate(event.payload);
+    await addHostIceCandidate(event.payload);
   }
 }
 
