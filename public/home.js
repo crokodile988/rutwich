@@ -77,7 +77,7 @@ function buildThumbStyle(roomId) {
 }
 
 function renderRoomCard(room) {
-  const shortId = room.roomId.toUpperCase();
+  const shortId = room.roomId;
   const safeTitle = escapeHtml(room.title);
 
   return `
