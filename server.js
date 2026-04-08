@@ -27,6 +27,10 @@ function createId(size = 10) {
   return crypto.randomBytes(size).toString("hex").slice(0, size);
 }
 
+function normalizeRoomId(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
@@ -224,7 +228,7 @@ async function handleApi(request, response, requestUrl) {
     return;
   }
 
-  const roomId = parts[2];
+  const roomId = normalizeRoomId(parts[2]);
   const room = rooms.get(roomId);
 
   if (!room) {
