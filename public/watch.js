@@ -1,5 +1,7 @@
 const viewerState = {
+  disconnectNoticeTimer: 0,
   lastEventId: 0,
+  lastHostOfferSdp: "",
   pendingHostIce: [],
   peer: null,
   pollTimer: null,
@@ -154,6 +156,8 @@ async function sendViewerEvent(type, payload) {
 }
 
 function closePeer() {
+  window.clearTimeout(viewerState.disconnectNoticeTimer);
+
   if (!viewerState.peer) {
     viewerState.pendingHostIce = [];
     return;
@@ -162,6 +166,10 @@ function closePeer() {
   viewerState.peer.close();
   viewerState.peer = null;
   viewerState.pendingHostIce = [];
+}
+
+function resetOfferState() {
+  viewerState.lastHostOfferSdp = "";
 }
 
 function hasRemoteDescription(peer) {
@@ -197,7 +205,7 @@ async function addHostIceCandidate(candidate) {
 }
 
 function ensurePeer() {
-  if (viewerState.peer) {
+  if (viewerState.peer && viewerState.peer.connectionState !== "closed") {
     return viewerState.peer;
   }
 
@@ -225,15 +233,42 @@ function ensurePeer() {
 
   peer.addEventListener("connectionstatechange", () => {
     if (peer.connectionState === "connected") {
+      window.clearTimeout(viewerState.disconnectNoticeTimer);
       setViewerStatus("Подключено");
       return;
     }
 
-    if (["disconnected", "failed"].includes(peer.connectionState)) {
+    if (peer.connectionState === "connecting") {
+      window.clearTimeout(viewerState.disconnectNoticeTimer);
+      return;
+    }
+
+    if (peer.connectionState === "failed") {
+      window.clearTimeout(viewerState.disconnectNoticeTimer);
       setViewerStatus("Соединение потеряно");
       viewerElements.remoteOverlay.hidden = false;
       setOverlayBadge("Соединение потеряно");
-      setViewerMessage("Связь прервалась. Можно подождать авто-возврата эфира или переподключиться.", "warn");
+      setViewerMessage("Связь не установилась. Попробуй переподключиться или проверь, доступен ли TURN.", "warn");
+      return;
+    }
+
+    if (peer.connectionState === "disconnected") {
+      window.clearTimeout(viewerState.disconnectNoticeTimer);
+      viewerState.disconnectNoticeTimer = window.setTimeout(() => {
+        if (viewerState.peer !== peer || peer.connectionState !== "disconnected") {
+          return;
+        }
+
+        setViewerStatus("Соединение нестабильно");
+        viewerElements.remoteOverlay.hidden = false;
+        setOverlayBadge("Пробуем восстановить");
+        setViewerMessage("Соединение просело. Подожди пару секунд или нажми переподключиться.", "warn");
+      }, 2500);
+      return;
+    }
+
+    if (peer.connectionState === "closed") {
+      window.clearTimeout(viewerState.disconnectNoticeTimer);
     }
   });
 
@@ -246,6 +281,7 @@ async function handleViewerEvent(event) {
 
   if (event.type === "host-offline") {
     closePeer();
+    resetOfferState();
     viewerElements.remoteVideo.srcObject = null;
     viewerElements.remoteOverlay.hidden = false;
     setOverlayBadge("Стример офлайн");
@@ -263,6 +299,18 @@ async function handleViewerEvent(event) {
   }
 
   if (event.type === "host-offer") {
+    const nextSdp = event.payload?.sdp || "";
+
+    if (nextSdp && nextSdp === viewerState.lastHostOfferSdp && viewerState.peer) {
+      return;
+    }
+
+    viewerState.lastHostOfferSdp = nextSdp;
+
+    if (viewerState.peer && hasRemoteDescription(viewerState.peer)) {
+      closePeer();
+    }
+
     const peer = ensurePeer();
     await peer.setRemoteDescription(event.payload);
     await flushPendingHostIce(peer);
@@ -357,6 +405,7 @@ function disconnectViewer(announce = true) {
   }
 
   closePeer();
+  resetOfferState();
   viewerElements.remoteVideo.srcObject = null;
   viewerElements.remoteOverlay.hidden = false;
   viewerElements.disconnectButton.disabled = true;
