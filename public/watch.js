@@ -388,7 +388,12 @@ async function connectViewer() {
     setViewerMessage("Подключение создано. Видео появится автоматически, как только придёт offer.", "ok");
   } catch (error) {
     console.error("Viewer connect error:", error);
-    setViewerMessage(error.message || "Не удалось подключиться к комнате.", "error");
+
+    if (typeof error?.message === "string" && error.message.includes("Room not found.")) {
+      setViewerMessage("Комната не найдена. Скорее всего, стримерский сервер перезапускался, и комнату нужно создать заново.", "error");
+    } else {
+      setViewerMessage(error.message || "Не удалось подключиться к комнате.", "error");
+    }
   } finally {
     viewerElements.connectButton.disabled = false;
   }
